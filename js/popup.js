@@ -584,6 +584,13 @@ function goToMove(index) {
     board.setLastMove(move.from, move.to);
     board.clearArrows();
 
+    // Play sound
+    if (move.captured) {
+      chessAudio.playCapture();
+    } else {
+      chessAudio.playMove();
+    }
+
     // Draw best move arrow if it wasn't the best move
     const result = gameData.results[index];
     const cls = gameData.classifications[index];
