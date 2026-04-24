@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Review — Chess Analysis</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-title">
+        <span class="icon">♟</span>
+        <span>Game Review</span>
+      </div>
+      <div class="header-actions">
+        <button class="header-btn" id="btn-new-game" title="New Game">
+          ✚
+        </button>
+        <button class="header-btn" id="btn-flip" title="Flip Board">
+          ⇅
+        </button>
+        <button class="header-btn" id="btn-settings" title="Settings">
+          ⚙
+        </button>
+      </div>
+    </div>
+
+    <!-- Settings Popover -->
+    <div class="settings-popover hidden" id="settings-popover">
+      <div class="settings-title">Analysis Settings</div>
+      <div class="settings-row">
+        <span class="settings-label">Engine Depth</span>
+        <select class="settings-select" id="depth-select">
+          <option value="12">12 (Fast)</option>
+          <option value="15">15</option>
+          <option value="18" selected>18 (Balanced)</option>
+          <option value="20">20</option>
+          <option value="22">22 (Thorough)</option>
+        </select>
+      </div>
+      <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+        <span class="settings-label" style="font-weight: 600; color: var(--text-primary);">Advanced AI Coach</span>
+        <span class="settings-label" style="font-size: 11px; margin-bottom: 4px;">Enter your free Gemini API key for natural language move explanations. Leave blank for standard engine feedback.</span>
+        <input type="password" id="api-key-input" class="settings-select" placeholder="AIzaSy..." style="width: 100%; cursor: text; padding: 6px 8px;">
+        <button class="btn-secondary" id="btn-save-settings" style="width: 100%; padding: 6px; font-size: 12px; margin-top: 4px;">Save Settings</button>
+      </div>
+    </div>
+
+    <!-- PGN Input Screen -->
+    <div class="pgn-input-screen" id="pgn-input-screen">
+      <div class="pgn-input-card">
+        <div class="pgn-input-title">
+          <span>♛</span> Analyze Your Game
+        </div>
+        <div class="pgn-input-subtitle">
+          Paste a PGN to get move-by-move analysis powered by Stockfish 18
+        </div>
+        <textarea 
+          class="pgn-textarea" 
+          id="pgn-textarea" 
+          placeholder="Paste your PGN here...
+
+Example:
+[Event &quot;Casual Game&quot;]
+[White &quot;Player1&quot;]
+[Black &quot;Player2&quot;]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 ..."
+          spellcheck="false"
+        ></textarea>
+        <div class="pgn-actions">
+          <button class="btn-primary" id="btn-analyze">
+            ⚡ Analyze Game
+          </button>
+        </div>
+
+        <div class="sample-pgns">
+          <div class="sample-pgns-label">Or try a sample game</div>
+          <button class="sample-pgn-btn" id="sample-immortal">
+            <span class="sample-title">The Immortal Game</span> — Anderssen vs Kieseritzky, 1851
+          </button>
+          <button class="sample-pgn-btn" id="sample-opera">
+            <span class="sample-title">The Opera Game</span> — Morphy vs Duke & Count, 1858
+          </button>
+          <button class="sample-pgn-btn" id="sample-evergreen">
+            <span class="sample-title">The Evergreen Game</span> — Anderssen vs Dufresne, 1852
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analysis Progress Screen -->
+    <div class="analysis-progress" id="analysis-progress">
+      <div class="progress-spinner"></div>
+      <div class="progress-text" id="progress-text">Initializing Stockfish 18...</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progress-bar"></div>
+      </div>
+      <div class="progress-move-info" id="progress-move-info"></div>
+    </div>
+
+    <!-- Review Screen -->
+    <div class="review-screen" id="review-screen">
+      <div class="review-main">
+        <!-- Board Area -->
+        <div class="board-area">
+          <!-- Evaluation Bar -->
+          <div class="eval-bar-container">
+            <div class="eval-bar-label white-advantage" id="eval-label-top">+0.0</div>
+            <div class="eval-bar">
+              <div class="eval-bar-white" id="eval-bar-white" style="height: 50%"></div>
+            </div>
+            <div class="eval-bar-label" id="eval-label-bottom"></div>
+          </div>
+
+          <!-- Board + Graph Column -->
+          <div class="board-column">
+            <div class="board-wrapper" id="board-container"></div>
+            <div class="eval-graph-container">
+              <canvas id="eval-graph"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="side-panel">
+          <!-- Coach Container -->
+          <div class="coach-container" id="coach-container">
+            <div class="coach-avatar">🦉</div>
+            <div class="coach-text-area">
+              <div class="coach-title" id="coach-title">Game Review</div>
+              <div class="coach-text" id="coach-text">Here we have the starting position. Let's see how the game develops.</div>
+            </div>
+          </div>
+
+          <!-- Black player (top) -->
+          <div class="player-info top" id="player-black-info">
+            <div class="player-details">
+              <div class="player-piece-icon black">♚</div>
+              <span class="player-name" id="player-black-name">Black</span>
+            </div>
+            <span class="player-accuracy high" id="player-black-accuracy">— %</span>
+          </div>
+
+          <!-- Move List -->
+          <div class="move-list-container" id="move-list-container">
+            <div class="move-list" id="move-list"></div>
+          </div>
+
+          <!-- Classification Summary -->
+          <div class="classification-summary" id="classification-summary">
+            <div class="summary-header">Move Summary</div>
+            <div class="summary-row" id="white-summary-row">
+              <span class="summary-row-label">White</span>
+              <div class="summary-badges" id="white-summary-badges"></div>
+            </div>
+            <div class="summary-row" id="black-summary-row">
+              <span class="summary-row-label">Black</span>
+              <div class="summary-badges" id="black-summary-badges"></div>
+            </div>
+          </div>
+
+          <!-- White player (bottom) -->
+          <div class="player-info bottom" id="player-white-info">
+            <div class="player-details">
+              <div class="player-piece-icon white">♔</div>
+              <span class="player-name" id="player-white-name">White</span>
+            </div>
+            <span class="player-accuracy high" id="player-white-accuracy">— %</span>
+          </div>
+
+          <!-- Navigation -->
+          <div class="nav-controls">
+            <button class="nav-btn" id="btn-first" title="First move">⟪</button>
+            <button class="nav-btn" id="btn-prev" title="Previous move">◁</button>
+            <button class="nav-btn" id="btn-next" title="Next move">▷</button>
+            <button class="nav-btn" id="btn-last" title="Last move">⟫</button>
+          </div>
+
+          <!-- Engine Info -->
+          <div class="engine-info">
+            <span class="engine-name">Stockfish 18</span>
+            <span class="engine-eval" id="engine-eval-display">depth 18</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/chess.min.js"></script>
+  <script src="js/move-classifier.js"></script>
+  <script src="js/coach.js"></script>
+  <script src="js/ai-coach.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/eval-graph.js"></script>
+  <script src="js/analysis.js"></script>
+  <script src="js/popup.js"></script>
+</body>
+</html>
