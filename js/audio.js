@@ -1,108 +1,36 @@
 /**
- * Audio Synthesizer for Chess Sounds using Web Audio API
- * Generates realistic "thud" and "snap" sounds without needing external files.
+ * Audio Synthesizer for Chess Sounds
+ * Uses embedded base64 high-quality MP3 sounds.
  */
 
 class ChessAudio {
   constructor() {
-    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    this.enabled = true;
-  }
-
-  // Ensures audio context is active (browsers block audio until user interaction)
-  async init() {
-    if (this.audioCtx.state === 'suspended') {
-      await this.audioCtx.resume();
+    this.moveSoundBase64 = "data:audio/mp3;base64,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";
+    this.captureSoundBase64 = "data:audio/mp3;base64,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";
+    
+    // Create pools to allow overlapping sounds without cutting off
+    this.movePool = [];
+    this.capturePool = [];
+    for (let i = 0; i < 5; i++) {
+      this.movePool.push(new Audio(this.moveSoundBase64));
+      this.capturePool.push(new Audio(this.captureSoundBase64));
     }
+    this.moveIdx = 0;
+    this.capIdx = 0;
   }
 
-  /**
-   * Synthesizes a standard move sound (a woody thud)
-   */
   playMove() {
-    if (!this.enabled) return;
-    this.init();
-
-    const t = this.audioCtx.currentTime;
-    const osc = this.audioCtx.createOscillator();
-    const gain = this.audioCtx.createGain();
-
-    osc.connect(gain);
-    gain.connect(this.audioCtx.destination);
-
-    // Rapid pitch drop to simulate a "thud" impact
-    osc.frequency.setValueAtTime(150, t);
-    osc.frequency.exponentialRampToValueAtTime(40, t + 0.05);
-
-    // Volume envelope: sharp attack, quick decay
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.7, t + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-
-    osc.start(t);
-    osc.stop(t + 0.1);
+    const audio = this.movePool[this.moveIdx];
+    audio.currentTime = 0;
+    audio.play().catch(e => console.log("Audio play failed:", e));
+    this.moveIdx = (this.moveIdx + 1) % this.movePool.length;
   }
 
-  /**
-   * Synthesizes a capture sound (a crisper snap/clack)
-   */
   playCapture() {
-    if (!this.enabled) return;
-    this.init();
-
-    const t = this.audioCtx.currentTime;
-    
-    // First oscillator: high pitched "clack"
-    const osc1 = this.audioCtx.createOscillator();
-    const gain1 = this.audioCtx.createGain();
-    osc1.type = 'triangle';
-    osc1.frequency.setValueAtTime(400, t);
-    osc1.frequency.exponentialRampToValueAtTime(100, t + 0.03);
-    gain1.gain.setValueAtTime(0, t);
-    gain1.gain.linearRampToValueAtTime(0.8, t + 0.005);
-    gain1.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
-    osc1.connect(gain1);
-    gain1.connect(this.audioCtx.destination);
-
-    // Second oscillator: lower "thud" body of the sound
-    const osc2 = this.audioCtx.createOscillator();
-    const gain2 = this.audioCtx.createGain();
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(150, t);
-    osc2.frequency.exponentialRampToValueAtTime(50, t + 0.08);
-    gain2.gain.setValueAtTime(0, t);
-    gain2.gain.linearRampToValueAtTime(0.6, t + 0.01);
-    gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-    osc2.connect(gain2);
-    gain2.connect(this.audioCtx.destination);
-
-    // Noise burst for texture
-    const bufferSize = this.audioCtx.sampleRate * 0.05; // 50ms of noise
-    const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
-    const noise = this.audioCtx.createBufferSource();
-    noise.buffer = buffer;
-    const noiseFilter = this.audioCtx.createBiquadFilter();
-    noiseFilter.type = 'highpass';
-    noiseFilter.frequency.value = 1000;
-    const noiseGain = this.audioCtx.createGain();
-    noiseGain.gain.setValueAtTime(0, t);
-    noiseGain.gain.linearRampToValueAtTime(0.3, t + 0.005);
-    noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.04);
-    
-    noise.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(this.audioCtx.destination);
-
-    osc1.start(t);
-    osc2.start(t);
-    noise.start(t);
-    
-    osc1.stop(t + 0.05);
-    osc2.stop(t + 0.1);
+    const audio = this.capturePool[this.capIdx];
+    audio.currentTime = 0;
+    audio.play().catch(e => console.log("Audio play failed:", e));
+    this.capIdx = (this.capIdx + 1) % this.capturePool.length;
   }
 }
 
